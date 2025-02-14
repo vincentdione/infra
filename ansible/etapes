@@ -1,0 +1,41 @@
+# Testez la connexion à une VM avec :
+
+Pour obtenir les IPs des machines :
+vagrant ssh-config
+
+
+# Installer ansible
+sudo apt update && sudo apt install -y ansible sshpass
+
+# Sur la machine Ansible, générez une clé SSH :
+ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
+
+# Copiez cette clé sur chaque machine (master, worker1, worker2) :
+ssh-copy-id vagrant@master
+ssh-copy-id vagrant@worker1
+ssh-copy-id vagrant@worker2
+
+
+# Tester la connexion
+ssh vagrant@master hostname
+ssh vagrant@worker1 hostname
+ssh vagrant@worker2 hostname
+
+
+
+
+
+
+
+
+
+
+vagrant ssh ansible-controller
+
+
+vagrant ssh ansible
+sudo apt update
+sudo apt install -y ansible
+
+ansible-playbook -i inventory.ini k8s_setup.yml
+

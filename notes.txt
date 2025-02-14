@@ -1,0 +1,200 @@
+Pour créer un cluster Kubernetes avec kubeadm en utilisant Vagrant, vous devez suivre plusieurs étapes. Voici un guide détaillé pour créer trois machines virtuelles (VM) et configurer un cluster Kubernetes avec un nœud maître (master) et deux nœuds worker.
+Étape 1: Installer Vagrant et VirtualBox
+Installer VirtualBox : Téléchargez et installez VirtualBox depuis le site officiel.
+Installer Vagrant : Téléchargez et installez Vagrant depuis le site officiel.
+Étape 2: Créer le fichier Vagrantfile
+Créez un répertoire pour votre projet et à l'intérieur, créez un fichier Vagrantfile avec le contenu suivant :
+ruby
+Copy
+Vagrant.configure("2") do |config|
+  # Configuration commune à toutes les VM
+  config.vm.box = "ubuntu/focal64"
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get install -y apt-transport-https curl
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
+    apt-get update
+    apt-get install -y kubelet kubeadm kubectl
+    apt-mark hold kubelet kubeadm kubectl
+  SHELL
+
+  # Configuration pour le nœud maître (master)
+  config.vm.define "master" do |master|
+    master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "192.168.56.10"
+    master.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = "2"
+    end
+  end
+
+  # Configuration pour le premier nœud worker
+  config.vm.define "worker1" do |worker1|
+    worker1.vm.hostname = "worker1"
+    worker1.vm.network "private_network", ip: "192.168.56.11"
+    worker1.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+  end
+
+  # Configuration pour le deuxième nœud worker
+  config.vm.define "worker2" do |worker2|
+    worker2.vm.hostname = "worker2"
+    worker2.vm.network "private_network", ip: "192.168.56.12"
+    worker2.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+  end
+end
+Étape 3: Démarrer les machines virtuelles
+Dans le répertoire où se trouve votre Vagrantfile, exécutez la commande suivante pour démarrer les VM :
+bash
+Copy
+vagrant up
+Cela va créer et configurer les trois VM : master, worker1, et worker2.
+Étape 4: Configurer le nœud maître (master)
+Se connecter au nœud maître :
+bash
+Copy
+vagrant ssh master
+Initialiser le cluster Kubernetes :
+bash
+Copy
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.56.10
+Notez la commande kubeadm join qui sera affichée à la fin de l'initialisation. Vous en aurez besoin pour joindre les nœuds worker au cluster.
+Configurer kubectl :
+bash
+Copy
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+Installer un réseau pod (par exemple, Flannel) :
+bash
+Copy
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+Étape 5: Joindre les nœuds worker au cluster
+Se connecter à chaque nœud worker :
+Pour worker1 :
+bash
+Copy
+vagrant ssh worker1
+Pour worker2 :
+bash
+Copy
+vagrant ssh worker2
+Exécuter la commande kubeadm join :
+Sur chaque nœud worker, exécutez la commande kubeadm join que vous avez notée précédemment. Par exemple :
+bash
+Copy
+sudo kubeadm join 192.168.56.10:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+Étape 6: Vérifier le cluster
+Revenez sur le nœud maître et vérifiez que les nœuds sont bien joints au cluster :
+bash
+Copy
+kubectl get nodes
+Vous devriez voir les trois nœuds (master, worker1, et worker2) avec le statut Ready.
+
+
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/co sudo ufw allow 6443/tcp
+
+
+sudo ufw allow 6443/tcp
+
+
+sudo ufw allow 6443/tcpnfig
+
+
+sudo ufw allow 6443/tcp
+echo $KUBECONFIG
+
+
+
+export KUBECONFIG=~/.kube/config
+
+ls -l ~/.kube/config
+
+
+
+chmod 600 ~/.kube/config
+chown $(id -u):$(id -g) ~/.kube/config
+
+curl -k https://192.168.56.10:6443
+
+
+export KUBECONFIG=~/.kube/config
+
+
+
+cp ~/.kube/config /tmp/config
+
+
+
+Sur le nœud worker (worker1) :
+Utilisez scp pour copier le fichier depuis le nœud maître :
+bash
+Copy
+scp vagrant@192.168.56.10:/tmp/config ~/.kube/config
+
+Vérifier les permissions :
+Assurez-vous que le fichier ~/.kube/config a les bonnes permissions :
+bash
+Copy
+chmod 600 ~/.kube/config
+
+
+1. Générer une paire de clés SSH sur le worker
+Si vous n'avez pas encore de clé SSH sur le nœud worker, générez-en une :
+Générer une clé SSH :
+Exécutez la commande suivante sur le nœud worker (worker1) :
+bash
+Copy
+ssh-keygen -t rsa -b 4096
+Appuyez sur Entrée pour accepter l'emplacement par défaut et laissez le champ de la passphrase vide (ou définissez-en une si vous préférez).
+Afficher la clé publique :
+Une fois la clé générée, affichez la clé publique avec la commande suivante :
+bash
+Copy
+cat ~/.ssh/id_rsa.pub
+Copiez le contenu de la clé publique.
+
+2. Ajouter la clé publique au nœud maître
+Se connecter au nœud maître (master) :
+Depuis le nœud worker, essayez de vous connecter au nœud maître :
+bash
+Copy
+ssh vagrant@192.168.56.10
+Si la connexion échoue, vous devrez ajouter manuellement la clé publique au fichier ~/.ssh/authorized_keys sur le nœud maître.
+Ajouter la clé publique :
+Sur le nœud maître, ouvrez le fichier ~/.ssh/authorized_keys :
+bash
+Copy
+nano ~/.ssh/authorized_keys
+Collez la clé publique que vous avez copiée à l'étape précédente dans ce fichier, puis enregistrez et quittez (Ctrl + O, Entrée, Ctrl + X).
+Vérifier les permissions :
+Assurez-vous que les permissions du fichier ~/.ssh/authorized_keys sont correctes :
+bash
+Copy
+chmod 600 ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+
+
+ Copier le fichier ~/.kube/config
+Maintenant que l'authentification SSH est configurée, vous pouvez copier le fichier ~/.kube/config depuis le nœud maître vers le nœud worker.
+Copier le fichier :
+Exécutez la commande suivante sur le nœud worker (worker1) :
+bash
+Copy
+scp vagrant@192.168.56.10:/home/vagrant/.kube/config ~/.kube/config
+Vérifier les permissions :
+Assurez-vous que le fichier ~/.kube/config a les bonnes permissions :
+bash
+Copy
+chmod 600 ~/.kube/config
+
+
