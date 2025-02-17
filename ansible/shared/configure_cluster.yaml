@@ -1,0 +1,40 @@
+---
+- hosts: workers
+  become: yes
+  tasks:
+    - name: Ensure .kube directory exists
+      file:
+        path: "/home/vagrant/.kube"
+        state: directory
+        mode: '0755'
+        owner: vagrant
+        group: vagrant
+        
+    - name: Copier kube/config vers les workers
+      copy:
+        src: "/tmp/kube-config"
+        dest: "/home/vagrant/.kube/config"
+        owner: vagrant
+        group: vagrant
+        mode: '0644'
+
+    - name: Appliquer la commande de jonction sur les workers
+      shell: "{{ hostvars['192.168.56.10'].join_command_to_workers }}"
+      register: join_result
+
+    - name: Afficher le résultat de la jonction
+      debug:
+        msg: "Résultat de la jonction du worker {{ inventory_hostname }} : {{ join_result.stdout }}"
+
+- hosts: master
+  become: yes
+  tasks:
+    - name: Vérifier que les nodes sont joints
+      shell: |
+        export KUBECONFIG=/home/vagrant/.kube/config
+        kubectl get nodes
+      register: nodes_status
+
+    - name: Debug node statuses
+      debug:
+        msg: "{{ nodes_status.stdout }}"

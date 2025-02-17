@@ -1,13 +1,97 @@
- # Configuration de la VM Ansible
 Vagrant.configure("2") do |config|
 
+  # Configuration de la VM Ansible
   config.vm.define "ansible" do |ansible|
-    ansible.vm.box = "ubuntu/focal64"
-    ansible.vm.hostname = "ansible"
-    ansible.vm.network "private_network", ip: "192.168.56.20"
-    ansible.vm.provider "virtualbox" do |vb|
-      vb.memory = "1024"
-      vb.cpus = 1
+   ansible.vm.box = "ubuntu/focal64"
+   ansible.vm.hostname = "ansible"
+   ansible.vm.network "private_network", ip: "192.168.56.20"
+   ansible.vm.provider "virtualbox" do |vb|
+     vb.memory = "1024"
+     vb.cpus = 1
+   end
+   ansible.vm.provision "shell", path: "bootstrap.sh"
+   ansible.vm.synced_folder "./shared", "/home/vagrant/shared"
+
+   # Génération de la clé SSH si elle n'existe pas déjà
+   ansible.vm.provision "shell", inline: <<-SHELL
+      # Assurer les bonnes permissions sur ~/.ssh
+      mkdir -p /home/vagrant/.ssh
+      chown -R vagrant:vagrant /home/vagrant/.ssh
+      chmod 700 /home/vagrant/.ssh
+
+      # Générer la clé SSH uniquement si elle n'existe pas
+      if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
+        ssh-keygen -t rsa -b 2048 -f /home/vagrant/.ssh/id_rsa -q -N ""
+      fi
+
+      # Vérifier et forcer les bonnes permissions sur la clé privée et publique
+      chown vagrant:vagrant /home/vagrant/.ssh/id_rsa /home/vagrant/.ssh/id_rsa.pub
+      chmod 600 /home/vagrant/.ssh/id_rsa
+      chmod 644 /home/vagrant/.ssh/id_rsa.pub
+
+      # Ajouter la clé publique à authorized_keys pour permettre la connexion SSH sans mot de passe
+      cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+
+      # Copier la clé publique dans le dossier partagé pour l'utiliser sur d'autres machines
+      cp /home/vagrant/.ssh/id_rsa.pub /vagrant/shared/id_rsa.pub
+   SHELL
+ end
+
+
+  # Configuration de la VM Master
+  config.vm.define "master" do |master|
+    master.vm.box = "ubuntu/focal64"
+    master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "192.168.56.10"
+    master.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+    master.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
+  end
+
+  # Configuration de la VM Worker 1
+  config.vm.define "worker1" do |worker1|
+    worker1.vm.box = "ubuntu/focal64"
+    worker1.vm.hostname = "worker1"
+    worker1.vm.network "private_network", ip: "192.168.56.11"
+    worker1.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+    worker1.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
+  end
+
+  # Configuration de la VM Worker 2
+  config.vm.define "worker2" do |worker2|
+    worker2.vm.box = "ubuntu/focal64"
+    worker2.vm.hostname = "worker2"
+    worker2.vm.network "private_network", ip: "192.168.56.12"
+    worker2.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+    worker2.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
+  end
+
+ 
+
+  # Ajout de la clé publique Ansible aux autres VM (master, worker1, worker2)
+  ["master", "worker1", "worker2"].each do |node|
+    config.vm.define node do |vm|
+      vm.vm.provision "shell", inline: <<-SHELL
+        # Vérification que la clé publique existe dans le dossier partagé
+        if [ ! -f /vagrant/shared/id_rsa.pub ]; then
+          echo "Erreur : Clé publique SSH non trouvée dans /vagrant/shared/id_rsa.pub. Veuillez vérifier le fichier partagé."
+          exit 1
+        fi
+        mkdir -p /home/vagrant/.ssh
+        echo "$(cat /vagrant/shared/id_rsa.pub)" >> /home/vagrant/.ssh/authorized_keys
+        chmod 600 /home/vagrant/.ssh/authorized_keys
+        chmod 700 /home/vagrant/.ssh
+        chown -R vagrant:vagrant /home/vagrant/.ssh
+      SHELL
     end
   end
 end

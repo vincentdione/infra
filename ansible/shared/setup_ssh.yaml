@@ -1,0 +1,18 @@
+---
+- name: Copier la clé publique SSH vers les machines
+  hosts: k8s_cluster
+  become: yes
+  tasks:
+    - name: Assurer la présence du répertoire .ssh
+      file:
+        path: /home/vagrant/.ssh
+        state: directory
+        mode: '0700'
+        owner: vagrant
+        group: vagrant
+
+    - name: Copier la clé publique de l'hôte local vers les nœuds
+      authorized_key:
+        user: vagrant
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
