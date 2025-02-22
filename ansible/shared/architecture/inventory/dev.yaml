@@ -1,0 +1,9 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+  vars:
+    env: dev
+    docker_image: "mon-registry/mon-app:latest"
+    k8s_namespace: "dev"
+    k8s_deployment_file: "/tmp/deployment.yml"

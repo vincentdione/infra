@@ -1,0 +1,4 @@
+- name: Restaurer la version précédente du déploiement
+  command: kubectl rollout undo deployment/{{ app_name }} -n {{ k8s_namespace }}
+  when: deploy_output.failed
+  notify: Supprimer l'image Docker défectueuse

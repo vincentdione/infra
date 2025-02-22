@@ -1,0 +1,5 @@
+- name: Pousser l'image Docker
+  community.docker.docker_image:
+    name: "{{ docker_image }}"
+    push: true
+    source: local
