@@ -1,4 +1,0 @@
----
-- import_playbook: k8s_dependencies.yaml
-- import_playbook: install_kubernetes.yaml
-- import_playbook: configure_cluster.yaml
