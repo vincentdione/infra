@@ -1,0 +1,36 @@
+---
+# - name: Installer les dépendances sur tous les nœuds
+#   hosts: k8s_cluster
+#   become: yes
+#   include_role:
+#     - dependencies
+
+# - name: Configurer le nœud master
+#   hosts: master
+#   become: yes
+#   include_role:
+#     - master
+#     - flannel
+
+# - name: Configurer les nœuds workers
+#   hosts: workers
+#   become: yes
+#   include_role:
+#     - workers
+
+- name: Installer les dépendances sur tous les nœuds
+  include_role:
+    name: dependencies
+
+- name: Configurer le nœud master
+  include_role:
+    name: master
+
+- name: Configurer le réseau avec Flannel
+  include_role:
+    name: flannel
+
+- name: Configurer les nœuds workers
+  include_role:
+    name: workers
+

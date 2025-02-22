@@ -1,0 +1,9 @@
+- name: Apply Flannel CNI network to the cluster
+  shell: |
+    export KUBECONFIG=/home/vagrant/.kube/config
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  register: flannel_apply
+
+- name: Debug Flannel apply
+  debug:
+    msg: "{{ flannel_apply }}"

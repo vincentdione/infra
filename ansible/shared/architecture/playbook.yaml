@@ -1,0 +1,25 @@
+---
+# - name: Installer les dépendances sur tous les nœuds
+#   hosts: k8s_cluster
+#   become: yes
+#   roles:
+#     - dependencies
+
+# - name: Configurer le nœud master
+#   hosts: master
+#   become: yes
+#   roles:
+#     - master
+#     - flannel
+
+# - name: Configurer les nœuds workers
+#   hosts: workers
+#   become: yes
+#   roles:
+#     - workers
+
+- name: Configurer l'ensemble du cluster Kubernetes
+  hosts: all
+  become: yes
+  roles:
+    - cluster

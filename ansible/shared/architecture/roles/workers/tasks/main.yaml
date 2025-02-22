@@ -1,0 +1,23 @@
+- name: Ensure .kube directory exists
+  file:
+    path: "/home/vagrant/.kube"
+    state: directory
+    mode: '0755'
+    owner: vagrant
+    group: vagrant
+
+- name: Copy kubeconfig to workers
+  copy:
+    src: "/tmp/kube-config"
+    dest: "/home/vagrant/.kube/config"
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+- name: Join worker nodes to the cluster
+  shell: "{{ hostvars['192.168.56.10'].join_command_to_workers }}"
+  register: join_result
+
+- name: Debug join result
+  debug:
+    msg: "Worker {{ inventory_hostname }} join result: {{ join_result.stdout }}"
