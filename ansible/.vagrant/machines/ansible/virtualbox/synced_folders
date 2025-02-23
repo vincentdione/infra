@@ -1,1 +1,0 @@
-{"virtualbox":{"/home/vagrant/shared":{"guestpath":"/home/vagrant/shared","hostpath":"/Users/mac/Desktop/kube-cluster/ansible/shared","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/mac/Desktop/kube-cluster/ansible","disabled":false,"__vagrantfile":true}}}
