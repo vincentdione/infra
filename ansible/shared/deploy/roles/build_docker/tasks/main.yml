@@ -1,0 +1,17 @@
+# roles/build_docker/tasks/main.yml
+---
+- name: Debug afficher le chemin du projet cloné
+  debug: 
+    var: git_clone_result
+
+- name: Construire l'image Docker avec un tag spécifique
+  docker_image:
+    build:
+      path: "{{ github.project_dir }}"
+    name: "{{ composants.nom_image }}"
+    state: present
+  register: docker_build_result
+
+- name: Afficher le résultat de la construction Docker
+  debug:
+    var: docker_build_result

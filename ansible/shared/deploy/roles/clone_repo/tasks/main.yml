@@ -1,0 +1,12 @@
+---
+- name: Cloner le projet depuis Git
+  git:
+    repo: "https://{{ composants.github_token }}@{{ github.repo_url }}"
+    dest: "{{ github.project_dir }}"
+    version: "{{ branch }}"
+    force: yes
+  register: git_clone_result
+
+- name: Afficher le statut du clonage
+  debug:
+    var: git_clone_result

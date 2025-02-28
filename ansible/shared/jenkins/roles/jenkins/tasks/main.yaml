@@ -1,0 +1,83 @@
+---
+- name: Mettre à jour les paquets
+  apt:
+    update_cache: yes
+
+- name: Installer Java 17 et fontconfig
+  apt:
+    name:
+      - fontconfig
+      - openjdk-17-jre
+    state: present
+
+- name: Vérifier la version de Java installée
+  command: java -version
+  register: java_version
+  changed_when: false
+  ignore_errors: true
+
+- name: Afficher la version de Java
+  debug:
+    msg: "{{ java_version.stderr_lines }}"
+
+- name: Supprimer les anciennes clés GPG Jenkins (si existantes)
+  file:
+    path: /usr/share/keyrings/jenkins-keyring.asc
+    state: absent
+
+- name: Télécharger la nouvelle clé GPG de Jenkins
+  get_url:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    dest: /usr/share/keyrings/jenkins-keyring.asc
+    mode: '0644'
+
+- name: Ajouter le dépôt Jenkins
+  copy:
+    dest: /etc/apt/sources.list.d/jenkins.list
+    content: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+
+- name: Mettre à jour la liste des paquets
+  apt:
+    update_cache: yes
+
+- name: Installer Jenkins
+  apt:
+    name: jenkins
+    state: present
+
+- name: Activer et démarrer Jenkins
+  systemd:
+    name: jenkins
+    enabled: yes
+    state: started
+
+- name: Vérifier le statut de Jenkins
+  command: systemctl status jenkins
+  register: jenkins_status
+  changed_when: false
+
+- name: Afficher le statut de Jenkins
+  debug:
+    msg: "{{ jenkins_status.stdout_lines }}"
+
+- name: Créer le répertoire init.groovy.d si inexistant
+  file:
+    path: /var/lib/jenkins/init.groovy.d
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+
+- name: Définir un mot de passe admin Jenkins
+  template:
+    src: jenkins_admin_pass.groovy.j2
+    dest: /var/lib/jenkins/init.groovy.d/jenkins_admin_pass.groovy
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+  notify: Redémarrer Jenkins
+
+- name: Redémarrer Jenkins
+  systemd:
+    name: jenkins
+    state: restarted

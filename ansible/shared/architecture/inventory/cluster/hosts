@@ -5,6 +5,10 @@
 192.168.56.11 
 192.168.56.12 
 
+[jenkins]
+192.168.56.13
+
+
 [k8s_cluster:children]
 master
 workers

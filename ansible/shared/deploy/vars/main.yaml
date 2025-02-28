@@ -1,0 +1,12 @@
+---
+github:
+  repo_url: "github.com/sama-gp/samagp-angular.git"
+  username: "vincentdione"
+  project_dir: "/home/vagrant/samagp"
+branch: "main"
+
+cluster_masters: 
+  - master
+cluster_workers: 
+  - worker1
+  - worker2

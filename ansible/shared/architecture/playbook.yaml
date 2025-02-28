@@ -18,6 +18,12 @@
   roles:
     - workers
 
+- name: Installer jenkins
+  hosts: jenkins
+  become: yes
+  roles:
+    - jenkins
+
 # - name: Configurer l'ensemble du cluster Kubernetes
 #   hosts: all
 #   become: yes

@@ -1,0 +1,55 @@
+---
+- name: Installer les dépendances nécessaires pour NVM
+  apt:
+    name:
+      - curl
+      - bash
+    state: present
+
+- name: Télécharger et installer NVM
+  shell: |
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+  args:
+    creates: "/root/.nvm"
+    
+- name: Installer Node.js 20 via NVM
+  shell: |
+    export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm install 20 && nvm use 20
+  environment:
+    HOME: "{{ ansible_env.HOME }}"
+  args:
+    executable: /bin/bash
+
+- name: Vérifier que Node.js 20 est utilisé
+  shell: |
+    export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 20 && node -v
+  environment:
+    HOME: "{{ ansible_env.HOME }}"
+  register: node_version
+
+- name: Afficher la version de Node.js installée
+  debug:
+    msg: "La version de Node.js installée est : {{ node_version.stdout }}"
+
+
+- name: Installer les dépendances npm
+  shell: |
+    export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 20 && npm install
+  args:
+    chdir: "{{ github.project_dir }}"  # Remplacez par votre répertoire de projet
+  register: npm_install_result
+
+- name: Afficher le résultat de npm install
+  debug:
+    var: npm_install_result
+
+- name: Exécuter les tests npm
+  shell: |
+    export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 20 && npm install && npm run test
+  args:
+    chdir: "{{ github.project_dir }}"  
+  register: npm_test_result
+
+- name: Afficher le résultat des tests
+  debug:
+    var: npm_test_result

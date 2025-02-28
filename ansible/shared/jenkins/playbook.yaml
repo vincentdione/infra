@@ -1,0 +1,6 @@
+---
+- name: Installation et configuration de Jenkins
+  hosts: jenkins
+  become: yes
+  roles:
+    - jenkins

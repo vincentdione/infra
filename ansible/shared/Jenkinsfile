@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'my-angular-app'
+        DOCKER_REGISTRY = 'your-docker-registry'
+        APP_VERSION = ''
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/your-repo/your-angular-app.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                sh 'npm run test'
+            }
+        }
+
+        stage('Extract App Version') {
+            steps {
+                script {
+                    // Extraire la version du package.json
+                    APP_VERSION = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
+                    echo "Application version: ${APP_VERSION}"
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube Server') {
+                    sh 'sonar-scanner -Dsonar.projectVersion=${APP_VERSION}'
+                }
+            }
+        }
+
+        stage('Run Cypress Tests') {
+            steps {
+                sh 'npm run e2e' // Assurez-vous que Cypress est configuré dans votre projet
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Construire l'image Docker avec la version
+                    sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${APP_VERSION} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    // Pousser l'image Docker
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                        sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${APP_VERSION}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    // Lancer le playbook Ansible pour déployer sur Kubernetes
+                    ansiblePlaybook credentialsId: 'ansible-ssh-key', inventory: 'inventory', playbook: 'deploy-k8s.yml', extras: "-e app_version=${APP_VERSION}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

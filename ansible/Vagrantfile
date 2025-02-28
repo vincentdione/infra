@@ -75,10 +75,22 @@ Vagrant.configure("2") do |config|
     worker2.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
   end
 
+  config.vm.define "jenkins" do |jenkins|
+    jenkins.vm.box = "ubuntu/focal64"
+    jenkins.vm.hostname = "jenkins"
+    jenkins.vm.network "private_network", ip: "192.168.56.13"
+    jenkins.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+     # Provision avec un script externe
+    # jenkins.vm.provision "shell", path: "jenkins.sh"
+    jenkins.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
+  end
  
 
   # Ajout de la clé publique Ansible aux autres VM (master, worker1, worker2)
-  ["master", "worker1", "worker2"].each do |node|
+  ["master", "worker1", "worker2", "jenkins"].each do |node|
     config.vm.define node do |vm|
       vm.vm.provision "shell", inline: <<-SHELL
         # Vérification que la clé publique existe dans le dossier partagé
