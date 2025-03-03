@@ -43,3 +43,8 @@
     src: "/home/vagrant/.kube/config"
     dest: "/tmp/kube-config"
     flat: yes
+
+#sudo apt update
+#sudo apt install python3-pip
+#sudo pip3 install kubernetes
+

@@ -1,28 +1,30 @@
----
-- name: Installer les dépendances sur tous les nœuds
-  hosts: k8s_cluster
-  become: yes
-  roles:
-    - dependencies
+# ---
+# - name: Installer les dépendances sur tous les nœuds
+#   hosts: k8s_cluster
+#   become: yes
+#   roles:
+#     - dependencies
 
-- name: Configurer le nœud master
+# - name: Configurer le nœud master
+#   hosts: master
+#   become: yes
+#   roles:
+#     - master
+#     - flannel
+
+# - name: Configurer les nœuds workers
+#   hosts: workers
+#   become: yes
+#   roles:
+#     - workers
+
+- name: Configurer l'ingress nginx et rancher
   hosts: master
   become: yes
+  vars: 
   roles:
-    - master
-    - flannel
-
-- name: Configurer les nœuds workers
-  hosts: workers
-  become: yes
-  roles:
-    - workers
-
-- name: Installer jenkins
-  hosts: jenkins
-  become: yes
-  roles:
-    - jenkins
+    # - ingress-nginx
+    - rancher
 
 # - name: Configurer l'ensemble du cluster Kubernetes
 #   hosts: all

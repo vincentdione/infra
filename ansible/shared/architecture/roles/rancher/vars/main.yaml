@@ -1,0 +1,4 @@
+---
+# Variables pour les certificats SSL
+cert_directory: "/etc/kubernetes/pki"
+cert_name: "rancher-tls"

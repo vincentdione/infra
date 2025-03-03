@@ -1,0 +1,9 @@
+---
+# Defaults for rancher installation
+
+rancher_namespace: "cattle-system"
+rancher_hostname: "rancher.samagp.com"
+ingress_tls: false
+cert_directory: "/etc/kubernetes/pki"
+cert_name: "rancher-tls"
+kubecfg_path: "/home/vagrant/.kube/config"

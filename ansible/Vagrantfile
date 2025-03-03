@@ -2,7 +2,7 @@ Vagrant.configure("2") do |config|
 
   # Configuration de la VM Ansible
   config.vm.define "ansible" do |ansible|
-   ansible.vm.box = "ubuntu/focal64"
+   ansible.vm.box = "ubuntu/jammy64"
    ansible.vm.hostname = "ansible"
    ansible.vm.network "private_network", ip: "192.168.56.20"
    ansible.vm.provider "virtualbox" do |vb|
@@ -35,13 +35,14 @@ Vagrant.configure("2") do |config|
 
       # Copier la clé publique dans le dossier partagé pour l'utiliser sur d'autres machines
       cp /home/vagrant/.ssh/id_rsa.pub /vagrant/shared/id_rsa.pub
+      echo "192.168.56.10 rancher.samagp.com" |  tee -a /etc/hosts
    SHELL
  end
 
 
   # Configuration de la VM Master
   config.vm.define "master" do |master|
-    master.vm.box = "ubuntu/focal64"
+    master.vm.box = "ubuntu/jammy64"
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "192.168.56.10"
     master.vm.provider "virtualbox" do |vb|
@@ -49,11 +50,15 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
     end
     master.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
+    # Ajout des entrées /etc/hosts
+    master.vm.provision "shell", inline: <<-SHELL
+      echo "192.168.56.10 rancher.samagp.com" |  tee -a /etc/hosts
+    SHELL
   end
 
   # Configuration de la VM Worker 1
   config.vm.define "worker1" do |worker1|
-    worker1.vm.box = "ubuntu/focal64"
+    worker1.vm.box = "ubuntu/jammy64"
     worker1.vm.hostname = "worker1"
     worker1.vm.network "private_network", ip: "192.168.56.11"
     worker1.vm.provider "virtualbox" do |vb|
@@ -65,7 +70,7 @@ Vagrant.configure("2") do |config|
 
   # Configuration de la VM Worker 2
   config.vm.define "worker2" do |worker2|
-    worker2.vm.box = "ubuntu/focal64"
+    worker2.vm.box = "ubuntu/jammy64"
     worker2.vm.hostname = "worker2"
     worker2.vm.network "private_network", ip: "192.168.56.12"
     worker2.vm.provider "virtualbox" do |vb|
@@ -76,7 +81,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "jenkins" do |jenkins|
-    jenkins.vm.box = "ubuntu/focal64"
+    jenkins.vm.box = "ubuntu/jammy64"
     jenkins.vm.hostname = "jenkins"
     jenkins.vm.network "private_network", ip: "192.168.56.13"
     jenkins.vm.provider "virtualbox" do |vb|
@@ -86,6 +91,10 @@ Vagrant.configure("2") do |config|
      # Provision avec un script externe
     # jenkins.vm.provision "shell", path: "jenkins.sh"
     jenkins.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
+    # Ajout des entrées /etc/hosts
+    jenkins.vm.provision "shell", inline: <<-SHELL
+      echo "192.168.56.13 jenkins.samagp.com" |  tee -a /etc/hosts
+    SHELL
   end
  
 

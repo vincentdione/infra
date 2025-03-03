@@ -57,6 +57,13 @@
     state: present
     update_cache: yes
 
+- name: Installer Helm
+  become: yes
+  shell: |
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+
+
 - name: Disable swap
   shell: |
     swapoff -a

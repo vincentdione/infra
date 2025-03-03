@@ -1,0 +1,66 @@
+---
+- name: Ajouter le dépôt Rancher
+  become: yes
+  shell: |
+    helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+    helm repo update
+
+- name: Créer le namespace pour Rancher
+  become: yes
+  kubernetes.core.k8s:
+    name: "{{ rancher_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+  environment:
+        KUBECONFIG: "{{ kubecfg_path }}"
+
+- name: Installer Rancher avec Helm (sans HTTPS)
+  become: yes
+  shell: |
+    helm install rancher rancher-latest/rancher \
+      --namespace {{ rancher_namespace }} \
+      --set hostname={{ rancher_hostname }} \
+      --set ingress.tls={{ ingress_tls }}
+  environment:
+        KUBECONFIG: "{{ kubecfg_path }}"
+
+- name: Générer un certificat SSL auto-signé
+  become: yes
+  shell: |
+    mkdir -p {{ cert_directory }}
+    cd {{ cert_directory }}
+
+    # Générer la clé privée
+    openssl genrsa -out rancher.key 2048
+
+    # Générer la demande de signature de certificat (CSR)
+    openssl req -new -key rancher.key -out rancher.csr -subj "/CN={{ rancher_hostname }}/O=rancher"
+
+    # Générer un certificat auto-signé
+    openssl x509 -req -in rancher.csr -signkey rancher.key -out rancher.crt -days 365
+  environment:
+        KUBECONFIG: "{{ kubecfg_path }}"
+
+- name: Créer un secret TLS pour Rancher
+  become: yes
+  kubernetes.core.k8s:
+    name: "{{ cert_name }}"
+    namespace: "{{ rancher_namespace }}"
+    api_version: v1
+    kind: Secret
+    type: kubernetes.io/tls
+    state: present
+    data:
+      tls.crt: "{{ lookup('file', cert_directory + '/rancher.crt' | tofile | b64encode) }}"
+      tls.key: "{{ lookup('file', cert_directory + '/rancher.key' | tofile | b64encode) }}"
+  environment:
+        KUBECONFIG: "{{ kubecfg_path }}"
+
+- name: Appliquer l'Ingress dans Kubernetes
+  become: yes
+  kubernetes.core.k8s:
+    state: present
+    src: rancher-ingress.yaml
+  environment:
+        KUBECONFIG: "{{ kubecfg_path }}"
